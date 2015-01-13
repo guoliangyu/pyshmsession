@@ -12,7 +12,7 @@ int main(int argn, char* argv[])
 {
     if(argn < 2)
         return 0;
-    if(!init()){
+    if(!init("./sharemapfile", 64*1024, 1024)){
         printf("fail to init.\n");
         return 0;
     }

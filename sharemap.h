@@ -3,28 +3,38 @@
 namespace PyShmSession
 {
 
-const int BLOCKSIZE       =1024;
-const int MAPSIZE         =64 * 1024;
-
 struct MemBlock
 {
-    unsigned char data[BLOCKSIZE];
     int khash;
     int pre;
     int next;
     int timelinkNext;
     int timelinkPre;
+    unsigned char data[1];
 };
+
 
 class Map
 {
     private:
-        int __size;
-        int __freelist;
-        int __hash[MAPSIZE];
-        int __timeslice[60];
-        MemBlock __blocks[MAPSIZE];
+        int& __size;
+        int& __freelist;
+        int *__hash;
+        int *__timeslice;
+        static int BLOCKSIZE;
+        static int MAPSIZE;
 
+        class BlockArray
+        {
+            private:
+                void* __ptr;
+            public:
+                BlockArray(void* ptr):__ptr(ptr){}
+                MemBlock& operator[](int i){
+                    return *(MemBlock*)(__ptr + i * (sizeof(MemBlock) - 1 + BLOCKSIZE));
+                }
+        };
+        BlockArray __blocks;
         int hashint(const char* data, int len);
         void delTimeLink(int index)
         {
@@ -82,6 +92,7 @@ class Map
             __size -= 1;
         }
     public:
+        Map(void* base, int blocksize, int maxitems);
         bool init();
         bool get(const char* key, int klen, unsigned char* data, int len);
         bool add(const char* key, int klen, const unsigned char* data, int len);

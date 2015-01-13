@@ -2,7 +2,7 @@
 namespace PyShmSession
 {
 
-bool init();
+bool init(const char* filepath, int blocksize, int maxitem);
 
 bool get(const char* key, int klen, unsigned char* data, int len);
 

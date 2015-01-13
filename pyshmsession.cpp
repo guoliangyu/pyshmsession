@@ -14,13 +14,12 @@
 namespace PyShmSession
 {
 
-static int MEM_SIZE = sizeof(Map);
 static Map* instance = NULL;
 
-
-bool init()
+bool init(const char* filepath, int blocksize, int maxitem)
 {
-    key_t mkey = ftok("./sharemapfile", (int)'a');
+    int MEM_SIZE = (sizeof(MemBlock) + blocksize - 1) * maxitem + sizeof(int) * 2 + sizeof(int) * maxitem * 2 + 32; 
+    key_t mkey = ftok(filepath, (int)'a');
     int shmid = shmget(mkey, MEM_SIZE, IPC_CREAT | IPC_EXCL | 0666);
     if(shmid == -1){
         if(errno == EEXIST){
@@ -32,7 +31,7 @@ bool init()
             }
             std::string flag((const char*)buf, 32);
             if(flag != "f424d712334841b7b3d7a380fe1ecad8"){
-                PyShmSession::instance = (Map*)(buf+32);
+                PyShmSession::instance = new Map(buf+32, blocksize, maxitem);
                 if(PyShmSession::instance->init())
                     memcpy(buf, "f424d712334841b7b3d7a380fe1ecad8", 32);
                 else{
@@ -40,7 +39,7 @@ bool init()
                     return false;
                 }
             }else {
-                PyShmSession::instance = (Map*)(buf+32);
+                PyShmSession::instance = new Map(buf+32, blocksize, maxitem);
             }
         }
         else
@@ -51,7 +50,7 @@ bool init()
         if((long)buf == -1){
             return false;
         }
-        PyShmSession::instance = (Map*)(buf+32);
+        PyShmSession::instance = new Map(buf+32, blocksize, maxitem);
         if(PyShmSession::instance->init())
             memcpy(buf, "f424d712334841b7b3d7a380fe1ecad8", 32);
         else{
@@ -204,7 +203,10 @@ static PyObject* getwraper(PyObject* self, PyObject* args)
 
 static PyObject* initwraper(PyObject* self, PyObject* args)
 {
-    if(PyShmSession::init())
+    char* filepath;
+    int blocksize=0, maxitem=0;
+    PyArg_ParseTuple(args, "sii", &filepath, &blocksize, &maxitem);
+    if(PyShmSession::init(filepath, blocksize, maxitem))
     {
         Py_INCREF(Py_True);
         return Py_True;
@@ -241,4 +243,5 @@ PyMODINIT_FUNC initpyshmsession()
 {
     Py_InitModule("pyshmsession", methods);
 }
+
 

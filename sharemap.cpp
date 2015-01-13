@@ -13,6 +13,20 @@
 namespace PyShmSession
 {
 
+int Map::BLOCKSIZE;
+int Map::MAPSIZE;
+
+Map::Map(void* base, int blocksize, int maxitems):
+    __size(*(int*)base), 
+    __freelist(*(int*)(base + sizeof(int))),
+    __hash((int*)(base + sizeof(int)*2)),
+    __timeslice((int*)(base + sizeof(int)*2 + sizeof(int) * maxitems)),
+    __blocks((MemBlock*)(base + sizeof(int)*2 + sizeof(int)*maxitems + 60 * sizeof(int)))
+{
+    BLOCKSIZE = blocksize;
+    MAPSIZE = maxitems;
+}
+
 bool Map::init()
 {
     //初始化内存块

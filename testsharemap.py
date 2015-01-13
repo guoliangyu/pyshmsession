@@ -2,7 +2,7 @@ import pyshmsession
 import uuid
 import time
 
-pyshmsession.init()
+pyshmsession.init("./sharemapfile",64*1024,1024)
 
 s = {}
 
